@@ -1,86 +1,67 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Bars } from "react-loader-spinner"
 
 function UploadImage() {
-    const [img, setImg] = useState(null)
-    // const [video, setVideo] = useState(null)
-    const [load, setLoad] = useState(false)
-
-
-    const uploadFile = async (type) => {
-        const data = new FormData()
-        data.append('file', img)
-        data.append('upload_preset', "rds0yjfk")
-        try {
-
-            // let resourceType = type === 'image' ? 'image' : 'video'
-
-
-            const res = await axios.post(`https://api.cloudinary.com/v1_1/di7iebcws/image/upload`, data)
-            console.log({ res });
-            const { secure_url } = res.data
-            console.log(secure_url);
-            return secure_url
-        } catch (error) {
-            console.log(error);
-        }
-
-    }
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        try {
-            setLoad(true)
-            const imgUrl = await uploadFile('image')
-            // const videoUrl = await uploadFile('video')
-
-            let result = await axios.post("http://localhost:3000/api/image", { imgUrl })
-            console.log(result);
-
-            setImg(null)
-            // setVideo(null)
-
-            console.log("file upload successfully");
-            setLoad(false)
-
-        } catch (error) {
-            console.log(error);
-
-        }
-    }
-    return (
-        <div>
-            <form action="" onSubmit={handleSubmit} className='w-25 mx-auto mt-5'>
-                <div className='image form-group d-flex align-items-center'>
-                    <label htmlFor="img">Image: </label>
-                    <input type="file" className='form-control ms-2 ' name="img" id="img" accept='image/*' onChange={(e) => setImg(e.target.files[0])} />
-                </div>
-                {/* <div>
-                    <label htmlFor="video">Video</label>
-                    <input type="file" name="video" id="video" accept='video/*' onChange={(e) => setVideo(e.target.files[0])} />
-                </div> */}
-                <div className='submit-btn mt-3'>
-                    <button className='btn btn-primary' type='submit'>Upload</button>
-                </div>
-
-            </form>
-            {
-                load && <Bars
-                height="80"
-                width="80"
-                color="#4fa94d"
-                ariaLabel="bars-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-                visible={true}
-                />
+  const [img, setImg] = useState()
+  const [display, setDisplay] = useState([])
 
 
 
-            }
+
+  const result = async () => {
+    const data = await axios.get("http://localhost:8080/image")
+    console.log(data.data);
+    const mainData = data.data
+    setDisplay(mainData)
+  }
+  console.log(display);
+  useEffect(() => {
+    result()
+  }, [img])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const formData = new FormData()
+    formData.append('photo', img)
+    const res = await axios.post("http://localhost:8080/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+
+      },
+
+    })
+    console.log(res.data.imgUrl);
+    // setDisplay(res.data.imgUrl)
+    
+
+
+  }
+  return (
+    <div >
+      <form action="post" className='w-50 mx-auto mb-5' onSubmit={handleSubmit} >
+        <div className="form-group d-flex align-items-center mt-4">
+          <label htmlFor="img">
+            img:
+          </label>
+          <input type="file" name="photo" id="img" className="file-control form-control ms-3" accept='image/*' onChange={(e) => setImg(e.target.files[0])} />
+          <button type='submit' className='btn  btn-primary'>Upload</button>
         </div>
+      </form>
 
-    )
+      <div className="displayImg  mt-5 text-center">
+        {
+          display.map((item, index) => {
+            return (
+              <div className='mt-5'>
+                <img src={item?.imgUrl} key={index} alt="img" />
+              </div>
+            )
+          })
+        }
+
+      </div>
+    </div>
+  )
 }
 
 export default UploadImage
